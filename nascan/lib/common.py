@@ -1,10 +1,10 @@
 # coding:utf-8
 import mongo
 import socket
-import log
 import datetime
 import time
 import base64
+from nascan_log import logger
 
 def format_config(config_name, config_info):
     mark_list = []
@@ -19,7 +19,7 @@ def format_config(config_name, config_info):
                 name, location, key, value = mark.strip().split("|", 3)
                 mark_list.append([name.lower(), location, key, value])
     except Exception, e:
-        print e
+        logger.error(e)
     return mark_list
 
 
@@ -42,11 +42,13 @@ def monitor(CONFIG_INI, STATISTICS, NACHANGE):
             if date_ not in STATISTICS: STATISTICS[date_] = {"add": 0, "update": 0, "delete": 0}
             mongo.na_db.Statistics.update({"date": date_}, {"$set": {"info": STATISTICS[date_]}}, upsert=True)
             new_config = get_config()
-            if base64.b64encode(CONFIG_INI["Scan_list"]) != base64.b64encode(new_config["Scan_list"]):NACHANGE[0] = 1
+            if base64.b64encode(CONFIG_INI["Scan_list"]) != base64.b64encode(new_config["Scan_list"]):
+                NACHANGE[0] = 1
+                logger.info('Scan List Changed!')
             CONFIG_INI.clear()
             CONFIG_INI.update(new_config)
         except Exception, e:
-            print e
+            logger.error(e)
         time.sleep(30)
 
 
@@ -83,7 +85,7 @@ def cruise(STATISTICS,MASSCAN_AC):
                         time_ = datetime.datetime.now()
                         date_ = time_.strftime('%Y-%m-%d')
                         mongo.NA_INFO.remove({"ip": ip, "port": port})
-                        log.write('info', None, 0, '%s:%s delete' % (ip, port))
+                        logger.info('%s:%s delete', ip, port)
                         STATISTICS[date_]['delete'] += 1
                         del history_info["_id"]
                         history_info['del_time'] = time_

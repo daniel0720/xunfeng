@@ -1,6 +1,5 @@
 # coding:utf-8
 import mongo
-import log
 import socket
 import datetime
 import urllib2
@@ -9,6 +8,7 @@ import time
 import ssl
 import gzip
 import StringIO
+from nascan_log import logger
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context  # 忽略证书错误
@@ -38,6 +38,8 @@ class scan:
                 web_info = self.try_web()  # 尝试web访问
                 if web_info:
                     log.write('web', self.ip, self.port, web_info)
+                    logger.info("%s:%s is web", self.ip, self.port)
+                    logger.info("%s:%s web info %s", self.ip, self.port, web_info)
                     time_ = datetime.datetime.now()
                     mongo.NA_INFO.update({'ip': self.ip, 'port': self.port},
                                          {"$set": {'banner': self.banner, 'server': 'web', 'webinfo': web_info,
@@ -58,7 +60,7 @@ class scan:
                 self.banner = 'NULL'
         except Exception, e:
             self.banner = 'NULL'
-        log.write('portscan', self.ip, self.port, None)
+        logger.info("%s:%s is open", self.ip, self.port)
         banner = ''
         hostname = self.ip2hostname(self.ip)
         time_ = datetime.datetime.now()
@@ -119,7 +121,7 @@ class scan:
                 except:
                     pass
         if self.server:
-            log.write("server", self.ip, self.port, self.server)
+            logger.info("%s:%s is %s", self.ip, self.port, str(self.server))
             mongo.NA_INFO.update({"ip": self.ip, "port": self.port}, {
                                  "$set": {"server": self.server}})
 
@@ -178,6 +180,7 @@ class scan:
                     self.statistics[date_]['update'] += 1
                     log.write('info', None, 0, '%s:%s update web info' %
                               (self.ip, self.port))
+                    logger.info("%s:%s update web info", self.ip, self.port)
                     return web_info
         except:
             return
@@ -280,4 +283,4 @@ class scan:
                         if re.search(mark_info[3], re_html, re.I):
                             return mark_info[0]
                     except Exception, e:
-                        print mark_info[3]
+                        logger.error(mark_info[3])

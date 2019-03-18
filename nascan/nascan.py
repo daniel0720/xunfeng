@@ -15,6 +15,8 @@ if __name__ == "__main__":
         thread.start_new_thread(cruise, (STATISTICS, MASSCAN_AC))  # 失效记录删除线程
         socket.setdefaulttimeout(int(CONFIG_INI['Timeout']) / 2)  # 设置连接超时
         ac_data = []
+        cy_day_old = 0
+        ac_hour_old = 0
         while True:
             now_time = time.localtime()
             now_hour = now_time.tm_hour
@@ -22,7 +24,10 @@ if __name__ == "__main__":
             now_date = str(now_time.tm_year) + \
                 str(now_time.tm_mon) + str(now_day)
             cy_day, ac_hour = CONFIG_INI['Cycle'].split('|')
-            log.write('info', None, 0, u'扫描规则: ' + str(CONFIG_INI['Cycle']))
+            if int(cy_day) != cy_day_old or int(ac_hour) != ac_hour_old:    #判断是否打印扫描规则，如果改变，则打印，否则，只打印一次
+                logger.info(u'扫描规则： ' + str(CONFIG_INI['Cycle']))
+                cy_day_old = int(cy_day)
+                ac_hour_old = int(ac_hour)
             # 判断是否进入扫描时段
             if (now_hour == int(ac_hour) and now_day % int(cy_day) == 0 and now_date not in ac_data) or NACHANGE[0]:
                 ac_data.append(now_date)
@@ -34,4 +39,4 @@ if __name__ == "__main__":
                 s.run()
             time.sleep(60)
     except Exception, e:
-        print e
+        logger.error(e)

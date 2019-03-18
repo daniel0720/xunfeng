@@ -5,7 +5,7 @@ import struct
 import os
 import time
 import array
-import log
+from nascan_log import logger
 
 class SendPingThr(threading.Thread):
     def __init__(self, ipPool, icmpPacket, icmpSocket, timeout=3):
@@ -69,7 +69,7 @@ class Nscan:
             try:
                 ac_ip = Sock.recvfrom(1024)[1][0]
                 if ac_ip not in recvFroms:
-                    log.write("active", ac_ip, 0, None)
+                    logger.info("%s active", ac_ip)
                     recvFroms.add(ac_ip)
             except Exception:
                 pass
